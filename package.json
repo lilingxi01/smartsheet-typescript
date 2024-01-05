@@ -1,0 +1,22 @@
+{
+  "name": "smartsheet-typescript",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun src/index.ts",
+    "lint": "eslint scripts/*",
+    "clean": "rm -f -R node_modules/ dist/"
+  },
+  "devDependencies": {
+    "@taci-tech/eslint-config": "^0.0.3",
+    "@typescript-eslint/eslint-plugin": "^5.48.1",
+    "@typescript-eslint/parser": "^5.48.1",
+    "bun-types": "latest",
+    "eslint": "^8.56.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.4",
+    "zod": "^3.22.4"
+  }
+}
