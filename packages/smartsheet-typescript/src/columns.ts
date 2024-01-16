@@ -22,9 +22,20 @@ export const ColumnTypeSchema = z.enum([
   'PREDECESSOR',
   'TEXT_NUMBER',
 ]);
-export type SmartsheetColumnType = z.infer<typeof ColumnTypeSchema>;
+export type SmartsheetColumnType =
+  'ABSTRACT_DATETIME' |
+  'CHECKBOX' |
+  'CONTACT_LIST' |
+  'DATE' |
+  'DATETIME' |
+  'DURATION' |
+  'MULTI_CONTACT_LIST' |
+  'MULTI_PICKLIST' |
+  'PICKLIST' |
+  'PREDECESSOR' |
+  'TEXT_NUMBER';
 
-export const ColumnSchema = z.object({
+export const NewColumnSchema = z.object({
   title: z.string(),
   type: ColumnTypeSchema,
   systemColumnType: SystemColumnTypeSchema.optional(),
@@ -32,5 +43,11 @@ export const ColumnSchema = z.object({
    * Must be true or undefined.
    */
   primary: z.boolean().optional(),
+  options: z.array(z.string()).optional(),
 });
+export type SmartsheetNewColumn = z.infer<typeof NewColumnSchema>;
+
+export const ColumnSchema = NewColumnSchema.merge(z.object({
+  id: z.number(),
+}));
 export type SmartsheetColumn = z.infer<typeof ColumnSchema>;

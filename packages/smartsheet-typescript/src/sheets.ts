@@ -1,9 +1,9 @@
-import { smartsheetFetcher } from '@/smartsheet-sdk/utils/fetcher';
-import { SmartsheetFilterOptionsSchema } from '@/smartsheet-sdk/logistics/filter';
-import { defineProcedure } from '@/smartsheet-sdk/utils/procedure-core';
+import { smartsheetFetcher } from './utils/fetcher';
+import { SmartsheetFilterOptionsSchema } from './logistics/filter';
+import { defineProcedure } from './utils/procedure-core';
 import { z } from 'zod';
-import { ColumnSchema } from '@/smartsheet-sdk/columns';
-import { RowSchema } from '@/smartsheet-sdk/rows';
+import { ColumnSchema, NewColumnSchema } from './columns';
+import { RowSchema } from './rows';
 
 export const SheetSchema = z.object({
   id: z.number(),
@@ -46,7 +46,7 @@ export const sheets = {
   createSheetIntoSheets: defineProcedure({
     input: z.object({
       name: z.string(),
-      columns: ColumnSchema.array(),
+      columns: NewColumnSchema.array(),
     }),
     output: z.object({
       id: z.number(),

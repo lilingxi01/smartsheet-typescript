@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ServerEnvironment } from '@/smartsheet-sdk/utils/environment';
+import { ServerEnvironment } from './environment';
 
 /**
  * The smartsheetFetcher is an axios instance that is configured to use the Smartsheet API token.

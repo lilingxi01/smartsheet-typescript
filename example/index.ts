@@ -1,0 +1,49 @@
+import { SmartsheetAPI } from 'smartsheet-typescript';
+import { defineColumn } from 'smartsheet-typescript/src/schema/schema-definitions';
+
+const OpportunitySheetSchema = {
+  projectId: defineColumn({
+    columnName: 'Project ID #',
+    columnType: 'TEXT_NUMBER',
+    primary: true,
+  }),
+  primaryOwner: defineColumn({
+    columnName: 'Primary Owner',
+    columnType: 'TEXT_NUMBER',
+  }),
+  status: defineColumn({
+    columnName: 'Status',
+    columnType: 'PICKLIST',
+    options: ['Active', 'Inactive'],
+  }),
+};
+
+async function main() {
+  const opportunitySheet = await SmartsheetAPI.prepareSheet('Opportunity', OpportunitySheetSchema, {
+    createIfNotExist: true,
+  });
+
+  console.log(opportunitySheet.getRows());
+
+  await opportunitySheet.insertRow({
+    projectId: '123',
+    primaryOwner: '456',
+    status: 'HHH',
+  });
+
+  // const updatedRow = await SmartsheetAPI.rows.updateRow({
+  //   sheetId: 7462804994871172,
+  //   rowId: rowIds[0],
+  //   data: {
+  //     cells: [
+  //       {
+  //         columnId: 6441356042915716,
+  //         value: 'Test 222',
+  //       },
+  //     ],
+  //   },
+  // });
+  // console.log(updatedRow);
+}
+
+main();

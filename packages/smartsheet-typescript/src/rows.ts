@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { defineProcedure } from '@/smartsheet-sdk/utils/procedure-core';
-import { smartsheetFetcher } from '@/smartsheet-sdk/utils/fetcher';
+import { defineProcedure } from './utils/procedure-core';
+import { smartsheetFetcher } from './utils/fetcher';
 
 const NewCellSharedSchema = z.object({
   columnId: z.number(),
@@ -8,12 +8,13 @@ const NewCellSharedSchema = z.object({
 });
 export const NewCellSchema = z.union([
   z.object({
-    value: z.string().or(z.number()).or(z.boolean()).or(z.null()),
+    value: z.string().or(z.string().array()).or(z.number()).or(z.boolean()).or(z.null()),
   }).merge(NewCellSharedSchema),
   z.object({
     formula: z.string(),
   }).merge(NewCellSharedSchema),
 ]);
+export type SmartsheetNewCell = z.infer<typeof NewCellSchema>;
 
 export const NewRowSchema = z.object({
   expanded: z.boolean().optional(),

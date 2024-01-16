@@ -1,0 +1,16 @@
+{
+  "name": "example",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun index.ts",
+    "clean": "rm -f -R node_modules/"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "smartsheet-typescript": "workspace:*"
+  }
+}

@@ -104,6 +104,7 @@ class ProcedureCore<InputType = undefined, OutputType = void> {
         });
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
+          console.error('Axios:', err.response);
           throw new Error(err.message);
         }
         if (err instanceof Error) {
