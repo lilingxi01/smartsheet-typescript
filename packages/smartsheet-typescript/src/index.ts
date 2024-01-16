@@ -75,15 +75,18 @@ function checkSchemaValidity(schema: SmartsheetSchema): void {
   }
 }
 
-type PrepareSheetOptions = {
+type PrepareSheetOptions<Schema extends SmartsheetSchema> = {
+  name: string;
+  schema: Schema;
   createIfNotExist?: boolean;
 }
 
-async function prepareSheet<Schema extends SmartsheetSchema>(
-  name: string,
-  schema: Schema,
-  options: PrepareSheetOptions = {},
-): Promise<PreparedSheet<Schema>> {
+async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: PrepareSheetOptions<Schema>): Promise<PreparedSheet<Schema>> {
+  const {
+    name,
+    schema,
+    ...options
+  } = sheetSetup;
   checkSchemaValidity(schema);
   const sheets = await SmartsheetAPI.sheets.listSheets();
   const foundSheet = sheets.find((sheet) => sheet.name === name);

@@ -19,7 +19,9 @@ const OpportunitySheetSchema = {
 };
 
 async function main() {
-  const opportunitySheet = await SmartsheetAPI.prepareSheet('Opportunity', OpportunitySheetSchema, {
+  const opportunitySheet = await SmartsheetAPI.prepareSheet({
+    name: 'Opportunity',
+    schema: OpportunitySheetSchema,
     createIfNotExist: true,
   });
 
@@ -31,6 +33,7 @@ async function main() {
     status: 'HHH',
   });
 
+  // TODO: Implement a function for the code below.
   // const updatedRow = await SmartsheetAPI.rows.updateRow({
   //   sheetId: 7462804994871172,
   //   rowId: rowIds[0],
