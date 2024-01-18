@@ -3,7 +3,8 @@
   "module": "example/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun example/index.ts",
+    "dev": "bun prod && bun i && bun example/index.ts",
+    "prod": "cd packages/smartsheet-typescript && bun prod && cd ../..",
     "lint": "eslint packages/* example",
     "clean": "rm -f -R node_modules/"
   },

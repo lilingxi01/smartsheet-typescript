@@ -1,27 +1,33 @@
-import { SmartsheetColumnType } from '../columns';
+import { SmartsheetColumnType } from '@/columns';
+import { z, ZodEnum } from 'zod';
 
-type SmartsheetColumnConfigParams<T extends SmartsheetColumnType> = T extends keyof ColumnTypeDefinitionMap
-  ? ColumnTypeDefinitionMap[T]
-  : {/* No additional config available */};
-export type SmartsheetColumnDefinition<T extends SmartsheetColumnType, K extends SmartsheetColumnConfigParams<T> = SmartsheetColumnConfigParams<T>> = {
+export type ColumnTypesRequiringOptions = 'MULTI_PICKLIST' | 'PICKLIST';
+
+export enum SmartsheetSymbol {
+  STAR_RATING = 'STAR_RATING',
+}
+
+export type SmartsheetColumnDefinition<T extends SmartsheetColumnType, Options extends [string, ...string[]]> = {
   columnName: string;
   columnType: T;
   primary?: boolean;
-} & K;
+  validation?: boolean;
+} & (T extends ColumnTypesRequiringOptions ? {
+  options: ZodEnum<Options>;
+  symbol?: SmartsheetSymbol | null;
+} : {
+  options?: never;
+});
 
 export type SmartsheetSchema = {
-  [columnName: string]: SmartsheetColumnDefinition<SmartsheetColumnType>;
+  [columnName: string]: SmartsheetColumnDefinition<SmartsheetColumnType, [string, ...string[]]>;
 };
 
-type ColumnTypeDefinitionMap = {
-  'PICKLIST': {
-    options: [string, ...string[]];
-  },
-  'MULTI_PICKLIST': {
-    options: [string, ...string[]];
-  },
-};
-
-export function defineColumn<T extends SmartsheetColumnType>(def: SmartsheetColumnDefinition<T>): SmartsheetColumnDefinition<T> {
+export function defineColumn<
+  T extends SmartsheetColumnType,
+  Options extends [string, ...string[]],
+>(
+  def: SmartsheetColumnDefinition<T, Options>,
+): SmartsheetColumnDefinition<T, Options> {
   return def;
 }

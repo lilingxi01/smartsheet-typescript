@@ -9,31 +9,20 @@ export const SystemColumnTypeSchema = z.enum([
 ]);
 export type SmartsheetSystemColumnType = z.infer<typeof SystemColumnTypeSchema>;
 
-export const ColumnTypeSchema = z.enum([
-  'ABSTRACT_DATETIME',
-  'CHECKBOX',
-  'CONTACT_LIST',
-  'DATE',
-  'DATETIME',
-  'DURATION',
-  'MULTI_CONTACT_LIST',
-  'MULTI_PICKLIST',
-  'PICKLIST',
-  'PREDECESSOR',
-  'TEXT_NUMBER',
-]);
-export type SmartsheetColumnType =
-  'ABSTRACT_DATETIME' |
-  'CHECKBOX' |
-  'CONTACT_LIST' |
-  'DATE' |
-  'DATETIME' |
-  'DURATION' |
-  'MULTI_CONTACT_LIST' |
-  'MULTI_PICKLIST' |
-  'PICKLIST' |
-  'PREDECESSOR' |
-  'TEXT_NUMBER';
+export enum SmartsheetColumnType {
+  ABSTRACT_DATETIME = 'ABSTRACT_DATETIME',
+  CHECKBOX = 'CHECKBOX',
+  CONTACT_LIST = 'CONTACT_LIST',
+  DATE = 'DATE',
+  DATETIME = 'DATETIME',
+  DURATION = 'DURATION',
+  MULTI_CONTACT_LIST = 'MULTI_CONTACT_LIST',
+  MULTI_PICKLIST = 'MULTI_PICKLIST',
+  PICKLIST = 'PICKLIST',
+  PREDECESSOR = 'PREDECESSOR',
+  TEXT_NUMBER = 'TEXT_NUMBER',
+}
+export const ColumnTypeSchema = z.nativeEnum(SmartsheetColumnType);
 
 export const NewColumnSchema = z.object({
   title: z.string(),
