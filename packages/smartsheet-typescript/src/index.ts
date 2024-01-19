@@ -65,7 +65,7 @@ export type NewRow<Schema extends SmartsheetSchema> = {
 };
 
 export type PreparedRow<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]: z.infer<ReturnType<RowTypeMap[Schema[K]['columnType']]>>;
+  [K in keyof Schema]: z.infer<ReturnType<FunctionTypeByInputType<Schema, K>>>;
 } & {
   id: number;
 }
