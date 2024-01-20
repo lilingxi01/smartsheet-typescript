@@ -39,7 +39,11 @@ export const sheets = {
     output: SheetSchema,
     action: async ({ input }) => {
       // TODO.
-      const response = await smartsheetFetcher.get<SmartsheetSheet>(`/sheets/${input.sheetId}`);
+      const response = await smartsheetFetcher.get<SmartsheetSheet>(`/sheets/${input.sheetId}`, {
+        params: {
+          include: 'format',
+        },
+      });
       return response.data;
     },
   }),

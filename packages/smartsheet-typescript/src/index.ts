@@ -5,11 +5,12 @@ import {
   SmartsheetSchema,
 } from '@/schema/schema-definitions';
 import { SmartsheetColumn, SmartsheetColumnType } from '@/columns';
-import { z, ZodArray, ZodEnum } from 'zod';
+import { z, ZodArray, ZodEnum, ZodOptional } from 'zod';
 import { compareItems } from '@/utils/compare-items';
-import { mapColumnsToObject, mapObjectToColumns } from '@/utils/mapping';
+import { mapColumnsToFormats, mapColumnsToObject, mapObjectToColumns } from '@/utils/mapping';
 import { getCombinedZodSchema } from '@/utils/combined-schema';
 import { errorHandler } from '@/utils/error-handler';
+import { CellFormatter } from '@/cells';
 
 export type ConditionalRowValue<
   T extends SmartsheetColumnType,
@@ -26,6 +27,9 @@ function defineRowValueSchema<
   return func;
 }
 
+/**
+ * The schema map for all data types within a sheet.
+ */
 export const rowTypeMap = {
   'ABSTRACT_DATETIME': () => z.string(),
   'CHECKBOX': () => z.boolean(),
@@ -61,19 +65,31 @@ type FunctionTypeByInputType<
   : RowTypeMap[Schema[K]['columnType']];
 
 export type NewRow<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]?: z.infer<ReturnType<FunctionTypeByInputType<Schema, K>>>;
+  [K in keyof Schema]?: z.infer<ZodOptional<ReturnType<FunctionTypeByInputType<Schema, K>>>>;
 };
 
-export type PreparedRow<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]: z.infer<ReturnType<FunctionTypeByInputType<Schema, K>>>;
+export type RowFormats<Schema extends SmartsheetSchema> = {
+  [K in keyof Schema]: CellFormatter;
+};
+
+/**
+ * This type is used to hold the row data that is being processed. But this is not the final form of the row data.
+ * It will be converted to `PreparedRow` before being returned to the user and the `formats` property will be added.
+ */
+export type ProcessingRow<Schema extends SmartsheetSchema> = {
+  [K in keyof Schema]: z.infer<ZodOptional<ReturnType<FunctionTypeByInputType<Schema, K>>>>;
 } & {
   id: number;
 }
+export type PreparedRow<Schema extends SmartsheetSchema> = ProcessingRow<Schema> & {
+  formats: RowFormats<Schema>;
+  update: () => Promise<void>;
+};
 
 type PreparedSheet<Schema extends SmartsheetSchema> = {
-  getSheet: () => SmartsheetSheet;
-  getColumns: () => SmartsheetColumn[];
-  getRows: () => PreparedRow<Schema>[];
+  getSheet: () => Promise<SmartsheetSheet>;
+  getColumns: () => Promise<SmartsheetColumn[]>;
+  getRows: () => Promise<PreparedRow<Schema>[]>;
   insertRow: (row: NewRow<Schema>) => Promise<PreparedRow<Schema>>;
   // TODO: Implement the function below.
   // insertRowAt: (row: NewRow<Schema>, index: number) => Promise<PreparedRow<Schema>>;
@@ -132,12 +148,14 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
     }
 
     const sheet = await SmartsheetAPI.sheets.getSheet({ sheetId: sheetId });
+    console.log('sheet:', sheet);
     const columnsMatchedWithSchema: Record<number, string> = {}; // Key: column id, value: column title.
     for (const column of sheet.columns) {
-      const columnDefinition = Object.values(schema).find((columnDefinition) => columnDefinition.columnName === column.title);
-      if (!columnDefinition) {
+      const columnKey = Object.keys(schema).find((key) => schema[key].columnName === column.title);
+      if (!columnKey) {
         continue;
       }
+      const columnDefinition = schema[columnKey];
       // Check if the type matches.
       if (column.type !== columnDefinition.columnType) {
         throw new Error(`Column "${column.title}" type mismatch. Expected "${columnDefinition.columnType}", but got "${column.type}".`);
@@ -145,18 +163,28 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
       if ('options' in columnDefinition && (!column.options || !compareItems(columnDefinition.options?._def.values, column.options))) {
         throw new Error(`Column "${column.title}" options mismatch. Expected "${columnDefinition.options?._def.values}", but got "${column.options}".`);
       }
-      columnsMatchedWithSchema[column.id] = column.title;
+      columnsMatchedWithSchema[column.id] = columnKey;
     }
 
     const combinedSchema = getCombinedZodSchema(schema);
     const preparedRowSchema = z.object(combinedSchema).merge(z.object({
       id: z.number(),
-    })) as z.ZodType<PreparedRow<Schema>>;
+    })) as z.ZodType<ProcessingRow<Schema>>;
+
+    function updateRow(row: PreparedRow<Schema>) {
+      return SmartsheetAPI.rows.updateRow({
+        sheetId: sheetId,
+        rowId: row.id,
+        data: {
+          cells: mapObjectToColumns(sheet, schema, row, row.formats),
+        },
+      });
+    }
 
     return {
-      getSheet: () => sheet,
-      getColumns: () => sheet.columns,
-      getRows: () => {
+      getSheet: async () => sheet,
+      getColumns: async () => sheet.columns,
+      getRows: async () => {
         return sheet.rows.map((row) => {
           const obj: Record<string, unknown> = {};
           for (const cell of row.cells) {
@@ -167,7 +195,13 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
             obj[columnName] = cell.value;
           }
           obj.id = row.id;
-          return preparedRowSchema.parse(obj);
+          return {
+            ...preparedRowSchema.parse(obj),
+            formats: mapColumnsToFormats(row, columnsMatchedWithSchema),
+            update: async function() {
+              await updateRow(this);
+            },
+          } satisfies PreparedRow<Schema>;
         });
       },
       insertRow: async (row: NewRow<Schema>) => {
@@ -177,7 +211,12 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
             cells: mapObjectToColumns(sheet, schema, row),
           },
         });
-        return mapColumnsToObject(createdRow, preparedRowSchema, columnsMatchedWithSchema);
+        return {
+          ...mapColumnsToObject(createdRow, preparedRowSchema, columnsMatchedWithSchema),
+          update: async function() {
+            await updateRow(this);
+          },
+        } satisfies PreparedRow<Schema>;
       },
       getRow: async (rowId: number) => {
         const row = await SmartsheetAPI.rows.getRow({
@@ -187,9 +226,14 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
         if (!row) {
           throw new Error(`Row "${rowId}" not found.`);
         }
-        return mapColumnsToObject(row, preparedRowSchema, columnsMatchedWithSchema);
+        return {
+          ...mapColumnsToObject(row, preparedRowSchema, columnsMatchedWithSchema),
+          update: async function() {
+            await updateRow(this);
+          },
+        } satisfies PreparedRow<Schema>;
       },
-    };
+    } satisfies PreparedSheet<Schema>;
   });
 }
 
@@ -198,3 +242,10 @@ export const SmartsheetAPI = {
   rows,
   prepareSheet,
 };
+
+// Export the rest of the exported classes, functions, and types from the other files.
+export * from '@/sheets';
+export * from '@/rows';
+export * from '@/columns';
+export * from '@/cells';
+export * from '@/schema/schema-definitions';

@@ -12,6 +12,11 @@ export function getCombinedZodSchema<Schema extends SmartsheetSchema>(schema: Sc
     if (!rowTypeBuilder) {
       throw new Error(`Row type builder for "${columnDefinition.columnType}" not found.`);
     }
-    return [columnName, rowTypeBuilder(columnDefinition as SmartsheetColumnDefinition<typeof columnDefinition.columnType, [string, ...string[]]>)];
+    return [
+      columnName,
+      // I have added `optional()` to the end of each schema because the Smartsheet might not have value for all columns.
+      // It is highly possible that a column should be treated as required, but it is lack of a value in the sheet.
+      rowTypeBuilder(columnDefinition as SmartsheetColumnDefinition<typeof columnDefinition.columnType, [string, ...string[]]>).optional(),
+    ];
   }));
 }

@@ -1,34 +1,12 @@
 import { z } from 'zod';
 import { defineProcedure } from './utils/procedure-core';
 import { smartsheetFetcher } from './utils/fetcher';
-
-const NewCellSharedSchema = z.object({
-  columnId: z.number(),
-  format: z.string().optional(),
-});
-export const NewCellSchema = z.union([
-  z.object({
-    value: z.string().or(z.string().array()).or(z.number()).or(z.boolean()).or(z.null()),
-  }).merge(NewCellSharedSchema),
-  z.object({
-    formula: z.string(),
-  }).merge(NewCellSharedSchema),
-]);
-export type SmartsheetNewCell = z.infer<typeof NewCellSchema>;
+import { CellSchema, NewCellSchema } from '@/cells';
 
 export const NewRowSchema = z.object({
   expanded: z.boolean().optional(),
   locked: z.boolean().optional(),
   cells: NewCellSchema.array(),
-});
-
-// TODO: Add the rest of the cell types.
-export const CellSchema = z.object({
-  columnId: z.number(),
-  value: z.unknown(),
-  displayValue: z.unknown(),
-  columnType: z.unknown(),
-  strict: z.boolean().optional(),
 });
 
 export const RowSchema = z.object({
@@ -85,7 +63,11 @@ export const rows = {
     output: RowSchema,
     action: async ({ input }) => {
       // TODO.
-      const response = await smartsheetFetcher.get<SmartsheetRow>(`/sheets/${input.sheetId}/rows/${input.rowId}`);
+      const response = await smartsheetFetcher.get<SmartsheetRow>(`/sheets/${input.sheetId}/rows/${input.rowId}`, {
+        params: {
+          include: 'format',
+        },
+      });
       return response.data;
     },
   }),
@@ -122,7 +104,11 @@ export const rows = {
     output: RowSchema.array(),
     action: async ({ input }) => {
       // TODO.
-      const response = await smartsheetFetcher.put(`/sheets/${input.sheetId}/rows`, input.rows);
+      const response = await smartsheetFetcher.put(`/sheets/${input.sheetId}/rows`, input.rows, {
+        params: {
+          include: 'format',
+        },
+      });
       const updatedRows = response.data?.result;
       if (!updatedRows || !Array.isArray(updatedRows)) {
         throw new Error('Failed to create the row.');
