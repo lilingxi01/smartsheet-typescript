@@ -181,6 +181,7 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
       });
     }
 
+    // TODO: Assign the updated object back to the row object (e.g. refresh).
     return {
       getSheet: async () => sheet,
       getColumns: async () => sheet.columns,

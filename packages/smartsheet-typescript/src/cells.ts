@@ -53,48 +53,58 @@ const fontSizeMapping = Object.values(SmartsheetFontSize);
 
 // TODO: Their color indices are also unordered. We need to fix this!!!
 export enum SmartsheetColor {
-  NONE = 'none',
-  TRANSPARENT = 'transparent',
-  BLACK = '#000000',
-  BLUE_DARKER = '#0B347D',
-  BLUE = '#1061C3',
-  GREEN = '#237F2E',
-  GREEN_LIGHT = '#40B14B',
-  BROWN = '#592C00',
-  BLUE_LIGHT = '#5FB3F9',
-  PURPLE = '#61058B',
-  GRAY = '#757575',
-  GREEN_LIGHTER = '#7ED085',
-  PURPLE_LIGHT = '#9210AD',
-  BROWN_DARK = '#974C00',
-  RED_DARK = '#991310',
-  BLUE_LIGHTER = '#B9DDFC',
-  GRAY_LIGHT = '#BDBDBD',
-  GREEN_LIGHTER_2 = '#C6E7C8',
-  BROWN_LIGHT = '#D0AF8F',
-  PURPLE_LIGHTER = '#D190DA',
-  BLUE_LIGHTER_2 = '#E2F2FE',
-  GRAY_LIGHTER = '#E5E5E5',
-  GREEN_LIGHTER_3 = '#E7F5E9',
-  RED = '#EA352E',
-  ORANGE = '#EA5000',
-  YELLOW = '#EBC700',
-  PURPLE_LIGHTER_2 = '#EBC7EF',
-  BROWN_LIGHTER = '#EEDCCA',
-  BEIGE = '#F2E8DE',
-  PINK_LIGHT = '#F4E4F5',
-  PINK = '#F87E7D',
-  YELLOW_LIGHT = '#FEFF00',
-  YELLOW_LIGHTER = '#FEFF85',
-  ORANGE_LIGHT = '#FF8D00',
-  PINK_LIGHTER = '#FFCCD2',
-  ORANGE_LIGHTER = '#FFCD7A',
-  BEIGE_LIGHT = '#FFE1AF',
-  RED_LIGHT = '#FFEBEE',
-  YELLOW_LIGHTER_2 = '#FFED00',
-  BEIGE_LIGHTER = '#FFF3DF',
-  WHITE_LIGHTER = '#FFFEE6',
-  WHITE = '#FFFFFF',
+  AUTOMATIC = '', // 0
+  BLACK = '#000000', // 1
+  WHITE = '#ffffff', // 2
+  TRANSPARENT = 'transparent', // 3
+
+  // Fifth row in Smartsheet color selector.
+  RED_LIGHTER = '#EDE3EB', // 4
+  ORANGE_LIGHTER = '#FDF4E2', // 5
+  YELLOW_LIGHTER = '#FFFEE9', // 6
+  GREEN_LIGHTER = '#EAF5EA', // 7
+  BLUE_LIGHTER = '#E6F1FD', // 8
+  PURPLE_LIGHTER = '#F1E5F4', // 9
+  BEIGE_LIGHTER = '#F0E9DF', // 10
+
+  // Fourth row in Smartsheet color selector.
+  RED_LIGHT = '#F8CED3', // 11
+  ORANGE_LIGHT = '#FAE2B5', // 12
+  YELLOW_LIGHT = '#FFFF96', // 13
+  GREEN_LIGHT = '#CDE6CB', // 14
+  BLUE_LIGHT = '#C0DCF9', // 15
+  PURPLE_LIGHT = '#E5C9ED', // 16
+  BEIGE_LIGHT = '#EBDDCD', // 17
+  BROWN_LIGHT = '#E5E5E5', // 18
+
+  // Third row in Smartsheet color selector.
+  RED = '#E88581', // 19
+  ORANGE = '#F7CF87', // 20
+  YELLOW = '#FEFE54', // 21
+  GREEN = '#91CF8D', // 22
+  BLUE = '#74B1F3', // 23
+  PURPLE = '#C793D5', // 24
+  BEIGE = '#CBB093', // 25
+  BROWN = '#BDBDBD', // 26
+
+  // Second row in Smartsheet color selector.
+  RED_DARK = '#D8473A', // 27
+  ORANGE_DARK = '#F09336', // 28
+  YELLOW_DARK = '#FCEE4F', // 29
+  GREEN_DARK = '#61AF58', // 30
+  BLUE_DARK = '#2D60BD', // 31
+  PURPLE_DARK = '#8621A7', // 32
+  BEIGE_DARK = '#8D501A', // 33
+  BROWN_DARK = '#757575', // 34
+
+  // First row in Smartsheet color selector.
+  RED_DARKER = '#8C231B', // 35
+  ORANGE_DARKER = '#D95B27', // 36
+  YELLOW_DARKER = '#E5C943', // 37
+  GREEN_DARKER = '#407E39', // 38
+  BLUE_DARKER = '#183378', // 39
+  PURPLE_DARKER = '#591086', // 40
+  BEIGE_DARKER = '#542F0B', // 41
 }
 const colorMapping = Object.values(SmartsheetColor);
 
