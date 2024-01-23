@@ -1,6 +1,6 @@
 import { SmartsheetColumnDefinition, SmartsheetSchema } from '@/schema/schema-definitions';
-import { ConditionalRowValue, rowTypeMap } from '@/index';
 import { z } from 'zod';
+import { ConditionalRowValue, rowTypeMap } from '@/utils/rich-row-types';
 
 /**
  * Convert raw schema into an object of keys with corresponding Zod schemas for safe parsing.

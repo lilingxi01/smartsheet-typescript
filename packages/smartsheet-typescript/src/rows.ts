@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { defineProcedure } from './utils/procedure-core';
-import { smartsheetFetcher } from './utils/fetcher';
 import { CellSchema, NewCellSchema } from '@/cells';
 
 export const NewRowSchema = z.object({
@@ -26,9 +25,9 @@ export const rows = {
       row: NewRowSchema,
     }),
     output: RowSchema,
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.post(`/sheets/${input.sheetId}/rows`, input.row);
+      const response = await fetcher.post(`/sheets/${input.sheetId}/rows`, input.row);
       const createdRows = response.data?.result;
       if (!createdRows) {
         throw new Error('Failed to create the row.');
@@ -45,9 +44,9 @@ export const rows = {
       rows: NewRowSchema.array(),
     }),
     output: RowSchema.array(),
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.post(`/sheets/${input.sheetId}/rows`, input.rows);
+      const response = await fetcher.post(`/sheets/${input.sheetId}/rows`, input.rows);
       const createdRows = response.data?.result;
       if (!createdRows || !Array.isArray(createdRows)) {
         throw new Error('Failed to create the rows.');
@@ -61,9 +60,9 @@ export const rows = {
       rowId: z.number(),
     }),
     output: RowSchema,
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.get<SmartsheetRow>(`/sheets/${input.sheetId}/rows/${input.rowId}`, {
+      const response = await fetcher.get<SmartsheetRow>(`/sheets/${input.sheetId}/rows/${input.rowId}`, {
         params: {
           include: 'format',
         },
@@ -78,9 +77,9 @@ export const rows = {
       data: NewRowSchema.partial(),
     }),
     output: RowSchema,
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.put(`/sheets/${input.sheetId}/rows`, {
+      const response = await fetcher.put(`/sheets/${input.sheetId}/rows`, {
         id: input.rowId,
         ...input.data,
       });
@@ -102,9 +101,9 @@ export const rows = {
       }))),
     }),
     output: RowSchema.array(),
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.put(`/sheets/${input.sheetId}/rows`, input.rows, {
+      const response = await fetcher.put(`/sheets/${input.sheetId}/rows`, input.rows, {
         params: {
           include: 'format',
         },

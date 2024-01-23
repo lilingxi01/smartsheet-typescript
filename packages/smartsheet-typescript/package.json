@@ -1,6 +1,6 @@
 {
   "name": "smartsheet-typescript",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "files": [
     "dist",
     "README.md"
@@ -12,7 +12,8 @@
   "type": "module",
   "scripts": {
     "prod": "tsup src",
-    "clean": "rm -f -R node_modules/ dist/"
+    "clean": "rm -f -R node_modules/ dist/",
+    "publish": "bun clean && bun prod && npm publish"
   },
   "devDependencies": {
     "bun-types": "latest",

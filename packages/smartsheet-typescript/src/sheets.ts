@@ -1,4 +1,3 @@
-import { smartsheetFetcher } from './utils/fetcher';
 import { SmartsheetFilterOptionsSchema } from './logistics/filter';
 import { defineProcedure } from './utils/procedure-core';
 import { z } from 'zod';
@@ -26,9 +25,9 @@ export const sheets = {
       permalink: z.string(),
       version: z.number().optional(),
     }).array(),
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.get('/sheets');
+      const response = await fetcher.get('/sheets');
       return response.data?.data ?? [];
     },
   }),
@@ -37,9 +36,9 @@ export const sheets = {
       sheetId: z.number(),
     }).merge(SmartsheetFilterOptionsSchema),
     output: SheetSchema,
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.get<SmartsheetSheet>(`/sheets/${input.sheetId}`, {
+      const response = await fetcher.get<SmartsheetSheet>(`/sheets/${input.sheetId}`, {
         params: {
           include: 'format',
         },
@@ -58,9 +57,9 @@ export const sheets = {
       name: z.string(),
       permalink: z.string(),
     }),
-    action: async ({ input }) => {
+    action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await smartsheetFetcher.post('/sheets', input);
+      const response = await fetcher.post('/sheets', input);
       return response.data?.result;
     },
   }),

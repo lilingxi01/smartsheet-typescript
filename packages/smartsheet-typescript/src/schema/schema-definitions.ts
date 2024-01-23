@@ -1,5 +1,6 @@
 import { SmartsheetColumnType } from '@/columns';
 import { z, ZodEnum } from 'zod';
+import { CellFormatter } from '@/cells';
 
 export type ColumnTypesRequiringOptions = 'MULTI_PICKLIST' | 'PICKLIST';
 
@@ -12,6 +13,7 @@ export type SmartsheetColumnDefinition<T extends SmartsheetColumnType, Options e
   columnType: T;
   primary?: boolean;
   validation?: boolean;
+  defaultFormat?: Partial<CellFormatter>;
 } & (T extends ColumnTypesRequiringOptions ? {
   options: ZodEnum<Options>;
   symbol?: SmartsheetSymbol | null;

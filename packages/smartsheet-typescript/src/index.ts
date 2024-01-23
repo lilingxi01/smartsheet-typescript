@@ -1,127 +1,40 @@
-import { sheets, SmartsheetSheet } from '@/sheets';
+import { sheets } from '@/sheets';
 import { rows } from '@/rows';
-import {
-  SmartsheetColumnDefinition,
-  SmartsheetSchema,
-} from '@/schema/schema-definitions';
-import { SmartsheetColumn, SmartsheetColumnType } from '@/columns';
-import { z, ZodArray, ZodEnum, ZodOptional } from 'zod';
+import { SmartsheetSchema } from '@/schema/schema-definitions';
+import { z } from 'zod';
 import { compareItems } from '@/utils/compare-items';
 import { mapColumnsToFormats, mapColumnsToObject, mapObjectToColumns } from '@/utils/mapping';
-import { getCombinedZodSchema } from '@/utils/combined-schema';
+import { getCombinedZodSchema } from '@/utils/schema/get-combined-zod-schema';
 import { errorHandler } from '@/utils/error-handler';
-import { CellFormatter } from '@/cells';
+import { getSmartsheetFetcher } from '@/utils/fetcher';
+import { _mixFetcherIntoAPI } from '@/utils/interface-exposure';
+import { NewRow, PreparedRow, PreparedSheet, ProcessingRow } from '@/utils/rich-row-types';
+import { _checkSchemaValidity } from '@/utils/schema/validity';
 
-export type ConditionalRowValue<
-  T extends SmartsheetColumnType,
-  OutputType,
-> = <
-  Options extends [string, ...string[]],
->(def: SmartsheetColumnDefinition<T, Options>) => OutputType;
-
-function defineRowValueSchema<
-  T extends SmartsheetColumnType,
-  OutputType,
-  Func extends ConditionalRowValue<T, OutputType>,
->(columnType: T, func: Func) {
-  return func;
-}
-
-/**
- * The schema map for all data types within a sheet.
- */
-export const rowTypeMap = {
-  'ABSTRACT_DATETIME': () => z.string(),
-  'CHECKBOX': () => z.boolean(),
-  'CONTACT_LIST': () => z.array(z.string()),
-  'DATE': () => z.date(),
-  'DATETIME': () => z.date(),
-  'DURATION': () => z.number(),
-  'MULTI_CONTACT_LIST': () => z.array(z.string()),
-  'MULTI_PICKLIST': defineRowValueSchema(SmartsheetColumnType.MULTI_PICKLIST, (def) => {
-    return z.array(def.options);
-  }),
-  'PICKLIST': defineRowValueSchema(SmartsheetColumnType.PICKLIST, (def) => {
-    return def.options;
-  }),
-  'PREDECESSOR': () => z.string(),
-  'TEXT_NUMBER': () => z.string(),
-};
-type RowTypeMap = typeof rowTypeMap;
-
-type ExtractPicklistReturnType<T extends SmartsheetColumnType, Options extends [string, ...string[]]> = RowTypeMap[T] extends (def: any) => infer R
-  ? R extends ZodEnum<any>
-    ? ZodEnum<Options>
-    : R extends ZodArray<ZodEnum<any>>
-      ? ZodArray<ZodEnum<Options>>
-      : never
-  : never;
-
-type FunctionTypeByInputType<
-  Schema extends SmartsheetSchema,
-  K extends keyof Schema,
-> = Schema[K]['options'] extends z.ZodEnum<infer Options>
-  ? (def: SmartsheetColumnDefinition<Schema[K]['columnType'], Options>) => ExtractPicklistReturnType<Schema[K]['columnType'], Options>
-  : RowTypeMap[Schema[K]['columnType']];
-
-export type NewRow<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]?: z.infer<ZodOptional<ReturnType<FunctionTypeByInputType<Schema, K>>>>;
-};
-
-export type RowFormats<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]: CellFormatter;
-};
-
-/**
- * This type is used to hold the row data that is being processed. But this is not the final form of the row data.
- * It will be converted to `PreparedRow` before being returned to the user and the `formats` property will be added.
- */
-export type ProcessingRow<Schema extends SmartsheetSchema> = {
-  [K in keyof Schema]: z.infer<ZodOptional<ReturnType<FunctionTypeByInputType<Schema, K>>>>;
-} & {
-  id: number;
-}
-export type PreparedRow<Schema extends SmartsheetSchema> = ProcessingRow<Schema> & {
-  formats: RowFormats<Schema>;
-  update: () => Promise<void>;
-};
-
-type PreparedSheet<Schema extends SmartsheetSchema> = {
-  getSheet: () => Promise<SmartsheetSheet>;
-  getColumns: () => Promise<SmartsheetColumn[]>;
-  getRows: () => Promise<PreparedRow<Schema>[]>;
-  insertRow: (row: NewRow<Schema>) => Promise<PreparedRow<Schema>>;
-  // TODO: Implement the function below.
-  // insertRowAt: (row: NewRow<Schema>, index: number) => Promise<PreparedRow<Schema>>;
-  getRow: (rowId: number) => Promise<PreparedRow<Schema>>;
-};
-
-/**
- * Check if the schema is valid (has exactly one primary column).
- * @param schema - The schema to check.
- */
-function checkSchemaValidity(schema: SmartsheetSchema): void {
-  const columnNames = Object.keys(schema);
-  const primaryColumnNames = columnNames.filter((columnName) => schema[columnName].primary);
-  if (primaryColumnNames.length !== 1) {
-    throw new Error(`Schema must have exactly one primary column, but got ${primaryColumnNames.length}.`);
-  }
-}
-
-type PrepareSheetOptions<Schema extends SmartsheetSchema> = {
+type LoadSheetOptions<Schema extends SmartsheetSchema> = {
   name: string;
   schema: Schema;
   createIfNotExist?: boolean;
 }
 
-async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: PrepareSheetOptions<Schema>): Promise<PreparedSheet<Schema>> {
+/**
+ * Load a sheet from Smartsheet.
+ * @param sheetSetup
+ * @param options
+ * @private
+ */
+async function _loadSheet<Schema extends SmartsheetSchema>(
+  sheetSetup: LoadSheetOptions<Schema>,
+  options: SmartsheetSDKMetaOptions,
+): Promise<PreparedSheet<Schema>> {
+  const SmartsheetAPI = prepareSmartsheetAPI(options);
   return await errorHandler(async () => {
     const {
       name,
       schema,
       ...options
     } = sheetSetup;
-    checkSchemaValidity(schema);
+    _checkSchemaValidity(schema);
     const sheets = await SmartsheetAPI.sheets.listSheets();
     const foundSheet = sheets.find((sheet) => sheet.name === name);
     if (!foundSheet && !options.createIfNotExist) {
@@ -148,7 +61,6 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
     }
 
     const sheet = await SmartsheetAPI.sheets.getSheet({ sheetId: sheetId });
-    console.log('sheet:', sheet);
     const columnsMatchedWithSchema: Record<number, string> = {}; // Key: column id, value: column title.
     for (const column of sheet.columns) {
       const columnKey = Object.keys(schema).find((key) => schema[key].columnName === column.title);
@@ -198,7 +110,7 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
           obj.id = row.id;
           return {
             ...preparedRowSchema.parse(obj),
-            formats: mapColumnsToFormats(row, columnsMatchedWithSchema),
+            formats: mapColumnsToFormats(row, schema, columnsMatchedWithSchema),
             update: async function() {
               await updateRow(this);
             },
@@ -213,7 +125,7 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
           },
         });
         return {
-          ...mapColumnsToObject(createdRow, preparedRowSchema, columnsMatchedWithSchema),
+          ...mapColumnsToObject(createdRow, schema, preparedRowSchema, columnsMatchedWithSchema),
           update: async function() {
             await updateRow(this);
           },
@@ -228,7 +140,7 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
           throw new Error(`Row "${rowId}" not found.`);
         }
         return {
-          ...mapColumnsToObject(row, preparedRowSchema, columnsMatchedWithSchema),
+          ...mapColumnsToObject(row, schema, preparedRowSchema, columnsMatchedWithSchema),
           update: async function() {
             await updateRow(this);
           },
@@ -238,11 +150,45 @@ async function prepareSheet<Schema extends SmartsheetSchema>(sheetSetup: Prepare
   });
 }
 
-export const SmartsheetAPI = {
-  sheets,
-  rows,
-  prepareSheet,
+type SmartsheetSDKMetaOptions = {
+  accessToken: string;
 };
+
+/**
+ * This function creates a Smartsheet SDK instance for you to access the Smartsheet API conveniently and type-safely.
+ * @param options - The options for the Smartsheet configuration.
+ */
+export function prepareSmartsheetSDK(options: SmartsheetSDKMetaOptions) {
+  if (!options.accessToken) {
+    throw new Error('Missing Smartsheet API Token.');
+  }
+  return {
+    /**
+     * Load a sheet from Smartsheet.
+     * It checks if the sheet schema matches to corresponding columns configuration online, and throws an error if not.
+     * You can configure to create the sheet if it does not exist. Otherwise, it will throw an error if the sheet does not exist.
+     * @param sheetSetup - The sheet setup options (put basic configurations here).
+     */
+    loadSheet: <Schema extends SmartsheetSchema>(sheetSetup: LoadSheetOptions<Schema>) => {
+      return _loadSheet(sheetSetup, options);
+    },
+  };
+}
+
+/**
+ * This function creates a Smartsheet API instance for you to access the Smartsheet API with type safety.
+ * @param options - The options for the Smartsheet configuration.
+ */
+export function prepareSmartsheetAPI(options: SmartsheetSDKMetaOptions) {
+  if (!options.accessToken) {
+    throw new Error('Missing Smartsheet API Token.');
+  }
+  const fetcher = getSmartsheetFetcher(options.accessToken);
+  return {
+    sheets: _mixFetcherIntoAPI(sheets, fetcher),
+    rows: _mixFetcherIntoAPI(rows, fetcher),
+  };
+}
 
 // Export the rest of the exported classes, functions, and types from the other files.
 export * from '@/sheets';

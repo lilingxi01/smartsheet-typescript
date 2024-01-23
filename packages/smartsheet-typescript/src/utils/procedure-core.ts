@@ -2,11 +2,17 @@
 // These modules are used to define SDK procedures that are used to interact with the Smartsheet API.
 
 import { z, ZodSchema } from 'zod';
-import { AxiosError } from 'axios';
+import { AxiosError, AxiosInstance } from 'axios';
 
 export type FinalizedCaller<InputType, OutputType> = (input?: InputType) => Promise<OutputType>;
+export type FinalizedCallerWithFetcher<InputType, OutputType> = (fetcher: AxiosInstance) => FinalizedCaller<InputType, OutputType>;
+export type TransformedFinalizedCaller<OriginalCaller> = OriginalCaller extends FinalizedCallerWithFetcher<infer Input, infer Output>
+  ? FinalizedCaller<Input, Output>
+  : never;
+
 export type ProcedureActionParams<InputType, OutputType> = {
   input: InputType;
+  fetcher: AxiosInstance;
 }
 export type ProcedureAction<InputType, OutputType> = (params: ProcedureActionParams<InputType, OutputType>) => Promise<OutputType>;
 
@@ -85,11 +91,12 @@ class ProcedureCore<InputType = undefined, OutputType = void> {
    * The caller function will validate the input and output using optional schemas.
    *
    * @param {ProcedureAction} action - The procedure action to be executed.
+   * @param {AxiosInstance} fetcher - The Axios instance to be used for making requests.
    * @returns {FinalizedCaller} - The finalized caller function.
    * @throws {Error} - If the input fails validation based on the input schema.
    * @throws {Error} - If the output fails validation based on the output schema.
    */
-  action(action: ProcedureAction<InputType, OutputType>): FinalizedCaller<InputType, OutputType> {
+  action(action: ProcedureAction<InputType, OutputType>, fetcher: AxiosInstance): FinalizedCaller<InputType, OutputType> {
     return async (input) => {
       const inputSchema = this.inputSchema ?? z.undefined();
       const safeParsedInput = inputSchema.safeParse(input);
@@ -101,6 +108,7 @@ class ProcedureCore<InputType = undefined, OutputType = void> {
       try {
         output = await action({
           input: input as InputType,
+          fetcher,
         });
       } catch (err: unknown) {
         if (err instanceof AxiosError) {
@@ -140,10 +148,12 @@ export const procedureCore = new ProcedureCore();
  */
 export function defineProcedure<InputType = undefined, OutputType = void>(
   options: DefineProcedureOptions<InputType, OutputType>,
-): FinalizedCaller<InputType, OutputType> {
+): FinalizedCallerWithFetcher<InputType, OutputType> {
   const { input, output, action } = options;
-  return new ProcedureCore({
-    inputSchema: input,
-    outputSchema: output,
-  }).action(action);
+  return (fetcher: AxiosInstance) => {
+    return new ProcedureCore({
+      inputSchema: input,
+      outputSchema: output,
+    }).action(action, fetcher);
+  };
 }

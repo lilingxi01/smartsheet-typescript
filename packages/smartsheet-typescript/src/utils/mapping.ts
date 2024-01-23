@@ -1,10 +1,10 @@
 import { SmartsheetSheet } from '@/sheets';
 import { SmartsheetRow } from '@/rows';
 import { SmartsheetSchema } from '@/schema/schema-definitions';
-import { NewRow, PreparedRow, ProcessingRow, RowFormats, SmartsheetAPI } from '@/index';
 import { z } from 'zod';
-import { getCombinedZodSchema } from '@/utils/combined-schema';
+import { getCombinedZodSchema } from '@/utils/schema/get-combined-zod-schema';
 import { CellFormatter, SmartsheetNewCell } from '@/cells';
+import { NewRow, PreparedRow, ProcessingRow, RowFormats, RowFormatsWithActions } from '@/utils/rich-row-types';
 
 type ObjectValueType<Schema extends SmartsheetSchema> = NewRow<Schema>[keyof Schema];
 function mapObjectValueToSmartsheetValue<Schema extends SmartsheetSchema>(
@@ -29,6 +29,15 @@ export function mapObjectToColumns<Schema extends SmartsheetSchema>(
   obj: NewRow<Schema>,
   formats?: RowFormats<Schema>,
 ) {
+  const defaultFormats: RowFormats<Schema> = Object.fromEntries(Object.keys(schema).map((key) => {
+    const columnName = schema[key as keyof Schema].columnName;
+    const currDefaultFormat = schema[key as keyof Schema].defaultFormat;
+    if (!currDefaultFormat) {
+      return [columnName, CellFormatter.defaultFormatter];
+    }
+    return [columnName, CellFormatter.parse(currDefaultFormat)];
+  })) as RowFormats<Schema>;
+  const combinedFormats = { ...defaultFormats, ...formats };
   const columns = sheet.columns;
   const combinedZodSchema = getCombinedZodSchema(schema);
   const cells: SmartsheetNewCell[] = [];
@@ -48,11 +57,10 @@ export function mapObjectToColumns<Schema extends SmartsheetSchema>(
     if (!typeEnforcement.safeParse(value).success) {
       throw new Error(`Value "${value}" for column "${columnName}" does not match the type enforcement.`);
     }
-    console.log('stringify:', formats?.[key]?.stringify());
     cells.push({
       columnId: column.id,
       value: mapObjectValueToSmartsheetValue(value),
-      format: formats?.[key]?.stringify() ?? undefined,
+      format: combinedFormats[key].stringify(),
     });
   }
   return cells;
@@ -61,11 +69,13 @@ export function mapObjectToColumns<Schema extends SmartsheetSchema>(
 /**
  * Map a row to an ProcessingRow object.
  * @param row
+ * @param schema
  * @param rowSchema
  * @param columnsMatchedWithSchema
  */
 export function mapColumnsToObject<Schema extends SmartsheetSchema>(
   row: SmartsheetRow,
+  schema: Schema,
   rowSchema: z.ZodType<ProcessingRow<Schema>>,
   columnsMatchedWithSchema: Record<number, string>,
 ): PreparedRow<Schema> {
@@ -80,7 +90,7 @@ export function mapColumnsToObject<Schema extends SmartsheetSchema>(
   obj.id = row.id;
   return {
     ...rowSchema.parse(obj),
-    formats: mapColumnsToFormats(row, columnsMatchedWithSchema),
+    formats: mapColumnsToFormats(row, schema, columnsMatchedWithSchema),
     update: async () => {
       // This is a placeholder function. This will be implemented at a higher level with more context.
       throw new Error('Not implemented properly. This is probably caused by an internal error of the SDK.');
@@ -91,12 +101,14 @@ export function mapColumnsToObject<Schema extends SmartsheetSchema>(
 /**
  * Map a row to a RowFormats object.
  * @param row
+ * @param schema
  * @param columnsMatchedWithSchema
  */
 export function mapColumnsToFormats<Schema extends SmartsheetSchema>(
   row: SmartsheetRow,
+  schema: Schema,
   columnsMatchedWithSchema: Record<number, string>,
-): RowFormats<Schema> {
+): RowFormatsWithActions<Schema> {
   const obj: Record<string, CellFormatter> = {};
   for (const cell of row.cells) {
     const columnName = columnsMatchedWithSchema[cell.columnId];
@@ -110,6 +122,16 @@ export function mapColumnsToFormats<Schema extends SmartsheetSchema>(
       obj[columnName] = CellFormatter.parse('');
     }
   }
+  for (const [key, value] of Object.entries(obj)) {
+    obj[key] = Object.assign(value, {
+      applyDefaultFormat: function() {
+        Object.assign(this, {
+          ...CellFormatter.defaultFormatter,
+          ...schema[key].defaultFormat,
+        });
+      },
+    });
+  }
   // When all keys are populated, it is safe to cast the object to RowFormats<Schema>.
-  return obj as RowFormats<Schema>;
+  return obj as RowFormatsWithActions<Schema>;
 }

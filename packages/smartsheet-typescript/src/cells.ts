@@ -27,27 +27,27 @@ export const CellSchema = z.object({
 });
 
 export enum SmartsheetFontFamily {
-  Arial = 'Arial',
-  Roboto = 'Roboto',
-  Tahoma = 'Tahoma',
-  Times_New_Roman = 'Times New Roman',
-  Verdana = 'Verdana',
+  Arial = 'Arial', // 0
+  Roboto = 'Roboto', // 1
+  Tahoma = 'Tahoma', // 2
+  Times_New_Roman = 'Times New Roman', // 3
+  Verdana = 'Verdana', // 4
 }
 const fontFamilyMapping = Object.values(SmartsheetFontFamily);
 
 export enum SmartsheetFontSize {
-  SIZE_8 = '8',
-  SIZE_9 = '9',
-  SIZE_10 = '10',
-  SIZE_12 = '12',
-  SIZE_14 = '14',
-  SIZE_16 = '16',
-  SIZE_18 = '18',
-  SIZE_20 = '20',
-  SIZE_24 = '24',
-  SIZE_28 = '28',
-  SIZE_32 = '32',
-  SIZE_36 = '36',
+  SIZE_8 = '8', // 0
+  SIZE_9 = '9', // 1
+  SIZE_10 = '10', // 2
+  SIZE_12 = '12', // 3
+  SIZE_14 = '14', // 4
+  SIZE_16 = '16', // 5
+  SIZE_18 = '18', // 6
+  SIZE_20 = '20', // 7
+  SIZE_24 = '24', // 8
+  SIZE_28 = '28', // 9
+  SIZE_32 = '32', // 10
+  SIZE_36 = '36', // 11
 }
 const fontSizeMapping = Object.values(SmartsheetFontSize);
 
@@ -59,65 +59,85 @@ export enum SmartsheetColor {
   TRANSPARENT = 'transparent', // 3
 
   // Fifth row in Smartsheet color selector.
-  RED_LIGHTER = '#EDE3EB', // 4
-  ORANGE_LIGHTER = '#FDF4E2', // 5
-  YELLOW_LIGHTER = '#FFFEE9', // 6
-  GREEN_LIGHTER = '#EAF5EA', // 7
-  BLUE_LIGHTER = '#E6F1FD', // 8
-  PURPLE_LIGHTER = '#F1E5F4', // 9
-  BEIGE_LIGHTER = '#F0E9DF', // 10
+  RED_LIGHTEST = '#EDE3EB', // 4
+  ORANGE_LIGHTEST = '#FDF4E2', // 5
+  YELLOW_LIGHTEST = '#FFFEE9', // 6
+  GREEN_LIGHTEST = '#EAF5EA', // 7
+  BLUE_LIGHTEST = '#E6F1FD', // 8
+  PURPLE_LIGHTEST = '#F1E5F4', // 9
+  BEIGE_LIGHTEST = '#F0E9DF', // 10
 
   // Fourth row in Smartsheet color selector.
-  RED_LIGHT = '#F8CED3', // 11
-  ORANGE_LIGHT = '#FAE2B5', // 12
-  YELLOW_LIGHT = '#FFFF96', // 13
-  GREEN_LIGHT = '#CDE6CB', // 14
-  BLUE_LIGHT = '#C0DCF9', // 15
-  PURPLE_LIGHT = '#E5C9ED', // 16
-  BEIGE_LIGHT = '#EBDDCD', // 17
-  BROWN_LIGHT = '#E5E5E5', // 18
+  RED_LIGHTER = '#F8CED3', // 11
+  ORANGE_LIGHTER = '#FAE2B5', // 12
+  YELLOW_LIGHTER = '#FFFF96', // 13
+  GREEN_LIGHTER = '#CDE6CB', // 14
+  BLUE_LIGHTER = '#C0DCF9', // 15
+  PURPLE_LIGHTER = '#E5C9ED', // 16
+  BEIGE_LIGHTER = '#EBDDCD', // 17
+  BROWN_LIGHTER = '#E5E5E5', // 18
 
   // Third row in Smartsheet color selector.
-  RED = '#E88581', // 19
-  ORANGE = '#F7CF87', // 20
-  YELLOW = '#FEFE54', // 21
-  GREEN = '#91CF8D', // 22
-  BLUE = '#74B1F3', // 23
-  PURPLE = '#C793D5', // 24
-  BEIGE = '#CBB093', // 25
-  BROWN = '#BDBDBD', // 26
+  RED_LIGHT = '#E88581', // 19
+  ORANGE_LIGHT = '#F7CF87', // 20
+  YELLOW_LIGHT = '#FEFE54', // 21
+  GREEN_LIGHT = '#91CF8D', // 22
+  BLUE_LIGHT = '#74B1F3', // 23
+  PURPLE_LIGHT = '#C793D5', // 24
+  BEIGE_LIGHT = '#CBB093', // 25
+  BROWN_LIGHT = '#BDBDBD', // 26
 
   // Second row in Smartsheet color selector.
-  RED_DARK = '#D8473A', // 27
-  ORANGE_DARK = '#F09336', // 28
-  YELLOW_DARK = '#FCEE4F', // 29
-  GREEN_DARK = '#61AF58', // 30
-  BLUE_DARK = '#2D60BD', // 31
-  PURPLE_DARK = '#8621A7', // 32
-  BEIGE_DARK = '#8D501A', // 33
-  BROWN_DARK = '#757575', // 34
+  RED = '#D8473A', // 27
+  ORANGE = '#F09336', // 28
+  YELLOW = '#FCEE4F', // 29
+  GREEN = '#61AF58', // 30
+  BLUE = '#2D60BD', // 31
+  PURPLE = '#8621A7', // 32
+  BEIGE = '#8D501A', // 33
+  BROWN = '#757575', // 34
 
   // First row in Smartsheet color selector.
-  RED_DARKER = '#8C231B', // 35
-  ORANGE_DARKER = '#D95B27', // 36
-  YELLOW_DARKER = '#E5C943', // 37
-  GREEN_DARKER = '#407E39', // 38
-  BLUE_DARKER = '#183378', // 39
-  PURPLE_DARKER = '#591086', // 40
-  BEIGE_DARKER = '#542F0B', // 41
+  RED_DARK = '#8C231B', // 35
+  ORANGE_DARK = '#D95B27', // 36
+  YELLOW_DARK = '#E5C943', // 37
+  GREEN_DARK = '#407E39', // 38
+  BLUE_DARK = '#183378', // 39
+  PURPLE_DARK = '#591086', // 40
+  BEIGE_DARK = '#542F0B', // 41
 }
 const colorMapping = Object.values(SmartsheetColor);
 
 // TODO: Their currency numbers are not in order and is designed tricky. We will add more when needed.
 export enum SmartsheetCurrency {
-  NONE = 'none',
-  CAD = '4',
-  EUR = '6',
-  USD = '13',
-  CNY = '16',
+  NONE = '', // 0
+  ARS = 'ARS', // 1
+  AUD = 'AUD', // 2
+  BRL = 'BRL', // 3
+  CAD = 'CAD', // 4
+  CLP = 'CLP', // 5
+  EUR = 'EUR', // 6
+  GBP = 'GBP', // 7
+  ILS = 'ILS', // 8
+  INR = 'INR', // 9
+  JPY = 'JPY', // 10
+  MXN = 'MXN', // 11
+  RUB = 'RUB', // 12
+  USD = 'USD', // 13
+  ZAR = 'ZAR', // 14
+  CHF = 'CHF', // 15
+  CNY = 'CNY', // 16
+  DKK = 'DKK', // 17
+  HKD = 'HKD', // 18
+  KRW = 'KRW', // 19
+  NOK = 'NOK', // 20
+  NZD = 'NZD', // 21
+  SEK = 'SEK', // 22
+  SGD = 'SGD', // 23
 }
 const currencyMapping = Object.values(SmartsheetCurrency);
 
+// TODO: Align the format number to each item.
 export enum SmartsheetDateFormat {
   LOCALE_BASED = 'LOCALE_BASED',
   MMMM_D_YYYY = 'MMMM_D_YYYY',
@@ -134,26 +154,26 @@ export enum SmartsheetDateFormat {
 const dateFormatMapping = Object.values(SmartsheetDateFormat);
 
 export enum SmartsheetHorizontalAlign {
-  DEFAULT = 'default',
-  LEFT = 'left',
-  CENTER = 'center',
-  RIGHT = 'right',
+  DEFAULT = '', // 0
+  LEFT = 'LEFT', // 1
+  CENTER = 'CENTER', // 2
+  RIGHT = 'RIGHT', // 3
 }
 const horizontalAlignMapping = Object.values(SmartsheetHorizontalAlign);
 
 export enum SmartsheetVerticalAlign {
-  DEFAULT = 'default',
-  TOP = 'top',
-  MIDDLE = 'middle',
-  BOTTOM = 'bottom',
+  DEFAULT = '', // 0
+  TOP = 'TOP', // 1
+  MIDDLE = 'MIDDLE', // 2
+  BOTTOM = 'BOTTOM', // 3
 }
 const verticalAlignMapping = Object.values(SmartsheetVerticalAlign);
 
 export enum SmartsheetNumberFormat {
-  NONE = 'none',
-  NUMBER = 'NUMBER',
-  CURRENCY = 'CURRENCY',
-  PERCENT = 'PERCENT',
+  NONE = '', // 0
+  THOUSAND_SEPARATED = 'THOUSAND_SEPARATED', // 1
+  CURRENCY = 'CURRENCY', // 2
+  PERCENTAGE = 'PERCENTAGE', // 3
 }
 const numberFormatMapping = Object.values(SmartsheetNumberFormat);
 
@@ -207,7 +227,7 @@ export function stringifyFormatter(formatter: CellFormatter): string {
 
     formatter.currency === defaultFormatter.currency
       ? ''
-      : formatter.currency,
+      : currencyMapping.indexOf(formatter.currency).toString(),
 
     formatter.decimalCount === defaultFormatter.decimalCount
       ? ''
@@ -265,7 +285,13 @@ export class CellFormatter {
    *
    * @param {string} formatString - The format string to initialize the object with. Default value is 'defaultFormatString'.
    */
-  constructor(formatString?: string) {
+  constructor(formatString?: string | Partial<CellFormatter>) {
+    if (typeof formatString === 'object') {
+      // Partial<CellFormatter> is a partial object of CellFormatter.
+      // We will use the default value for the missing properties.
+      const mergedFormatString = Object.assign({}, CellFormatter.defaultFormatter, formatString);
+      formatString = stringifyFormatter(mergedFormatString);
+    }
     let splitFormatString = formatString?.split(',') ?? [];
     const defaultValues = defaultFormatString.split(',').map((value) => value ? value : '0');
     if (defaultValues.length !== 17) {
@@ -290,7 +316,7 @@ export class CellFormatter {
     this.backgroundColor = colorMapping[parseInt(values[9])];
     this.taskbarColor = colorMapping[parseInt(values[10])];
     // Transform the value to SmartsheetCurrency enum (not based on the index but the value).
-    this.currency = currencyMapping.find((currency) => currency === (values[11])) ?? SmartsheetCurrency.NONE;
+    this.currency = currencyMapping[parseInt(values[11])];
     this.decimalCount = isNaN(parseInt(values[12])) ? 0 : parseInt(values[12]);
     this.thousandsSeparator = values[13] === '1';
     this.numberFormat = numberFormatMapping[parseInt(values[14])];
@@ -302,7 +328,7 @@ export class CellFormatter {
    * Parses a format string.
    * @param format - The format string from Smartsheet cell object to parse.
    */
-  static parse(format: string): CellFormatter {
+  static parse(format: string | Partial<CellFormatter>): CellFormatter {
     return new CellFormatter(format);
   }
 
