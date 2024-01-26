@@ -6,7 +6,7 @@
     "dev": "bun prod && bun i && bun example/index.ts",
     "prod": "bun run --cwd packages/smartsheet-typescript prod",
     "lint": "eslint packages/* example",
-    "publish": "bun run --cwd packages/smartsheet-typescript publish",
+    "release": "bun run --cwd packages/smartsheet-typescript release",
     "clean": "rm -f -R node_modules/"
   },
   "workspaces": ["packages/*", "example"],

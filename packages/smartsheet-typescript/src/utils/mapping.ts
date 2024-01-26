@@ -60,7 +60,7 @@ export function mapObjectToColumns<Schema extends SmartsheetSchema>(
     cells.push({
       columnId: column.id,
       value: mapObjectValueToSmartsheetValue(value),
-      format: combinedFormats[key].stringify(),
+      format: combinedFormats[key]?.stringify() ?? undefined,
     });
   }
   return cells;

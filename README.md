@@ -1,30 +1,51 @@
-# Smartsheet TypeScript SDK Experiments
+![Cover](https://imagedelivery.net/Dr98IMl5gQ9tPkFM5JRcng/afca3dd9-65b1-4fc0-97ef-4002071e8a00/Ultra)
 
-## Roadmap
+# Smartsheet TypeScript SDK (Monorepo)
+
+## Package Documentation
+
+Visit [the package README](./packages/smartsheet-typescript/README.md) for more information.
+
+## Development Roadmap
 
 - [x] Base architecture for end-to-end type-safety SDK
 - [x] Smartsheet API Authentication and fetcher
 - [x] Basic verification test of sheets, columns, rows, and cells execution
 - [x] Sheets
-- [ ] Columns
-  - [ ] Get column/columns by name/names
+- [x] Columns
 - [x] Rows
-  - [ ] Cells
-  - [ ] More helper functions for row-level and cell-level executions
+  - [x] Cells
+  - [x] Cell types
+  - [x] Cell formats
+- [x] Schema definition support and type hints
 - [ ] Attachments
 - [ ] Importing and Exporting
-- [ ] Arbitrary error handling
+- [x] Arbitrary error handling
 - [ ] Complex structure verification (TBD)
 
-## Usage
+## Development Guide
 
-To install dependencies:
+### 1. Install dependencies
 
 ```bash
 bun install
+# or
+npm install
+# or
+yarn install
+# or
+pnpm install
 ```
 
-To run a simple test (defined in `src/index.ts`) at this stage:
+[Bun runtime](https://bun.sh/) is recommended for the development of this package.
+
+### 2. Set up environment variables for local development
+
+```bash
+cp .env.example .env
+```
+
+### 3. Run the example script defined in `./example/index.ts`
 
 ```bash
 bun dev

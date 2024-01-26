@@ -54,8 +54,7 @@ async function main() {
   });
   console.log('createdRow:', createdRow);
 
-  const sheet = await sampleSheet.getSheet();
-  const row = await sampleSheet.getRow(sheet.rows[0].id);
+  const row = await sampleSheet.getRow(createdRow.id);
 
   row.column2 = 'Modified column 2';
   await row.update();
