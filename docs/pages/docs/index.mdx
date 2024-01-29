@@ -1,0 +1,119 @@
+import { Callout } from 'nextra/components';
+
+# Smartsheet SDK for TypeScript
+
+![Cover](https://imagedelivery.net/Dr98IMl5gQ9tPkFM5JRcng/afca3dd9-65b1-4fc0-97ef-4002071e8a00/Ultra)
+
+<Callout type="warning">
+  This documentation is still a WIP. Package is for early access only as of now and APIs are subject to change.
+</Callout>
+
+## Installation
+
+```bash
+npm install smartsheet-typescript zod
+# or
+yarn add smartsheet-typescript zod
+# or
+pnpm add smartsheet-typescript zod
+# or
+bun add smartsheet-typescript zod
+```
+
+This package is developed with [Bun](https://bun.sh/), a JavaScript runtime and package manager. However, you can use any package manager you like to install this package and run it on any JavaScript runtime.
+
+`zod` is a peer dependency we use for validating the type for both querying and updating. We want you to have full control of the type validation and the version of `zod` (because we know there might be some compatibility issues with newer packages), so we don't want to include it as a dependency. `v3.21.1` is recommended but not required.
+
+## Basic Usage
+
+### 1. Prepare the SDK with your secret
+
+Please protect your secret with environment variables or other secure methods. Do not write your secret in your code directly!
+
+```typescript
+import { prepareSmartsheetSDK } from 'smartsheet-typescript';
+
+export const SmartsheetSDK = prepareSmartsheetSDK({
+  accessToken: '', // TODO: Fill in your access token here.
+});
+```
+
+To get the access token, go to your Smartsheet account and find your "account token".
+
+### 2. Use the SDK
+
+```typescript
+import {
+  defineColumn,
+  SmartsheetColumnType, SmartsheetCurrency,
+  SmartsheetNumberFormat,
+  SmartsheetSymbol,
+} from 'smartsheet-typescript';
+import { z } from 'zod';
+import { SmartsheetSDK } from '@/sdk-preparation';
+
+// Define the schema of your sheet.
+// When it does not match the actual sheet online, it will throw an error for data safety concerns.
+const SampleSheetSchema = {
+  column1: defineColumn({
+    columnName: 'Column 1',
+    columnType: SmartsheetColumnType.TEXT_NUMBER,
+    primary: true, // You must have exactly one primary column in your schema.
+  }),
+  column2: defineColumn({
+    columnName: 'Column 2',
+    columnType: SmartsheetColumnType.TEXT_NUMBER,
+  }),
+  column3: defineColumn({
+    columnName: 'Column 3 (Select List)',
+    columnType: SmartsheetColumnType.PICKLIST,
+    options: z.enum(['Option 1', 'Option 2', 'Option 3']),
+  }),
+  column4: defineColumn({
+    columnName: 'Column 4 (Rating)',
+    columnType: SmartsheetColumnType.PICKLIST,
+    symbol: SmartsheetSymbol.STAR_RATING,
+    options: z.enum(['Empty', 'One', 'Two', 'Three', 'Four', 'Five']),
+  }),
+  column5: defineColumn({
+    columnName: 'Column 5 (Currency)',
+    columnType: SmartsheetColumnType.TEXT_NUMBER,
+    defaultFormat: {
+      currency: SmartsheetCurrency.EUR,
+      numberFormat: SmartsheetNumberFormat.CURRENCY, // This must be set in order to use currency.
+    },
+  }),
+};
+
+async function main() {
+  // Load the sheet based on the schema.
+  const sampleSheet = await SmartsheetSDK.loadSheet({
+    name: 'Sample',
+    schema: SampleSheetSchema,
+    createIfNotExist: true, // This is optional. If you don't want to create the sheet if it does not exist, set this to false, then it will throw an error for you whenever the sheet does not exist.
+  });
+
+  // Create a row.
+  const createdRow = await sampleSheet.insertRow({
+    column1: '123',
+    column2: '456',
+    column3: 'Option 3',
+    column4: 'Three',
+    column5: 123.45,
+  });
+
+  // Modify the row (you can also update directly on `createdRow`, but for demonstration purpose, we use `getRow` here).
+  const row = await sampleSheet.getRow(createdRow.id);
+  row.column2 = 'Modified column 2';
+  await row.update();
+}
+
+main();
+```
+
+A few things to note:
+
+1. The `currency` field in schema is just to define which currency to use and does not enforce the currency format. Remember to define `numberFormat` as `SmartsheetNumberFormat.CURRENCY` if you want to use currency.
+2. The sheet schema must match with the actual sheet online (if it exists already). Otherwise, it will throw an error for data safety concerns. Because the sheet is too flexible without this type enforcement, we don't want to see you messing up with your data.
+3. For defining a picklist, we need you to specify options as a zod enum validator. This is due to the type hint limitation of TypeScript (as of now) and for your flexibility. We are working on a better solution for this (ideally just an array of string) and this may change in the future.
+4. The error handling and standardization is also subject to change for easier usage.
