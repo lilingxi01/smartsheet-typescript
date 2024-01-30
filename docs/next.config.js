@@ -10,7 +10,9 @@ module.exports = withNextra({
   experimental: {
     scrollRestoration: true,
   },
+  output: 'export',
   images: {
+    unoptimized: true,
     domains: [
       'imagedelivery.net',
       'images.unsplash.com',
