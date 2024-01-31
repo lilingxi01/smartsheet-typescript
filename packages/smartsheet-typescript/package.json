@@ -8,6 +8,8 @@
   "exports": {
     ".": "./dist/index.js"
   },
+  "repository": "https://github.com/ECA-Greentech/smartsheet-typescript",
+  "homepage": "https://smartsheet-typescript.vercel.app/",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

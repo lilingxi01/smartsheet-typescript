@@ -6,6 +6,7 @@
     "dev": "bun prod && bun i && bun example/index.ts",
     "docs": "bun run --cwd docs dev",
     "docs:prod": "bun run --cwd docs prod",
+    "docs:start": "bun run --cwd docs start",
     "prod": "bun run --cwd packages/smartsheet-typescript prod",
     "lint": "eslint packages/* example",
     "release": "bun run --cwd packages/smartsheet-typescript release",

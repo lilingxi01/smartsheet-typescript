@@ -1,28 +1,27 @@
-name: Documentation Deployments
+name: Docs Deployment
 
 on:
   push:
     branches:
-      - 'main'
-
-permissions:
-  contents: write
+      - main
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-
+  deploy:
+    name: deploy
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
       - uses: oven-sh/setup-bun@v1
         with:
-          bun-version: 1.0.6
-      - name: Install Dependencies
-        run: bun i
-      - name: Check Building & Linting
-        run: bun prod && bun i && bun docs:prod
-      - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-         folder: docs/out
-         branch: docs
+          bun-version: latest
+      - name: Install Vercel CLI
+        run: bun add vercel -g
+      - name: Link the local repo to Vercel
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_DEPLOY_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Deploy to Vercel
+        run: vercel --prod --token=${{ secrets.VERCEL_DEPLOY_TOKEN }}
+      - name: Log out from Vercel
+        run: vercel logout
