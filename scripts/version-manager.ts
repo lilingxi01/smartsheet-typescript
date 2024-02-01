@@ -45,7 +45,7 @@ function bumpVersion(currentVersion: string, type: VersionType): string {
   return parts.join('.');
 }
 
-async function main() {
+function main() {
   const args = Bun.argv.slice(2); // Skip the first two default arguments
   const versionType: VersionType = args[0] as VersionType;
 
@@ -62,7 +62,7 @@ async function main() {
     const newVersion = bumpVersion(currentVersion, versionType);
     packageJson.version = newVersion;
 
-    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
     console.log(`Version updated.\nFrom: ${currentVersion}\nTo:   ${newVersion}`);
   } catch (error) {
     console.error('Error updating version:', error);
