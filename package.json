@@ -7,9 +7,10 @@
     "docs": "bun run --cwd docs dev",
     "docs:prod": "bun run --cwd docs prod",
     "docs:start": "bun run --cwd docs start",
+    "version": "bun scripts/version-manager.ts",
     "prod": "bun run --cwd packages/smartsheet-typescript prod",
     "lint": "eslint packages/* example",
-    "release": "bun run --cwd packages/smartsheet-typescript release",
+    "release": "bun scripts/version-dev-detector.ts && bun run --cwd packages/smartsheet-typescript release",
     "clean": "rm -f -R node_modules/"
   },
   "workspaces": ["packages/*", "example", "docs"],

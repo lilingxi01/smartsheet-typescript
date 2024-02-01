@@ -50,3 +50,11 @@ cp .env.example .env
 ```bash
 bun dev
 ```
+
+## Versioning
+
+We are using [SemVer](https://semver.org/) for versioning. In addition to that, we have added `dev` tag for the development version, such as `1.0.0-dev.1`.
+
+As a contributor, you can consider using `bun version dev` to bump up the development version when needed. This version will not be released to the public.
+
+When it is ready to be finalized, you can use `bun version <major|minor|patch>` to bump up the version to the next stable version with proper change size.
