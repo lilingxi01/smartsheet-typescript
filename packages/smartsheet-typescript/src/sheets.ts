@@ -27,7 +27,9 @@ export const sheets = {
     }).array(),
     action: async ({ input, fetcher }) => {
       // TODO.
-      const response = await fetcher.get('/sheets');
+      const response = await fetcher.get('/sheets', {
+        params: input,
+      });
       return response.data?.data ?? [];
     },
   }),

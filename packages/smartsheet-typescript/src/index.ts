@@ -11,11 +11,20 @@ import { _mixFetcherIntoAPI } from '@/utils/interface-exposure';
 import { NewRow, PreparedRow, PreparedSheet, ProcessingRow } from '@/utils/rich-row-types';
 import { _checkSchemaValidity } from '@/utils/schema/validity';
 
+type LoadSheetCommonOptions<Schema extends SmartsheetSchema> = {
+  schema: Schema;
+  /**
+   * If true, it will throw an error if the schema does not match the columns configuration online.
+   * By default, if there is an additional column online, it will be ignored locally, and you can still proceed. (Backward compatibility)
+   * When strict is enabled, we do not allow any backward compatibility.
+   */
+  strict?: boolean;
+};
+
 type LoadSheetOptions<Schema extends SmartsheetSchema> = {
   name: string;
-  schema: Schema;
   createIfNotExist?: boolean;
-}
+} & LoadSheetCommonOptions<Schema>;
 
 /**
  * Load a sheet from Smartsheet.
@@ -31,13 +40,11 @@ async function _loadSheet<Schema extends SmartsheetSchema>(
   return await errorHandler(async () => {
     const {
       name,
-      schema,
-      ...options
     } = sheetSetup;
-    _checkSchemaValidity(schema);
+    _checkSchemaValidity(sheetSetup.schema);
     const sheets = await SmartsheetAPI.sheets.listSheets();
     const foundSheet = sheets.find((sheet) => sheet.name === name);
-    if (!foundSheet && !options.createIfNotExist) {
+    if (!foundSheet && !sheetSetup.createIfNotExist) {
       throw new Error(`Sheet "${name}" not found.`);
     }
 
@@ -45,7 +52,7 @@ async function _loadSheet<Schema extends SmartsheetSchema>(
     if (!foundSheet) {
       const createdSheet = await SmartsheetAPI.sheets.createSheetIntoSheets({
         name: name,
-        columns: Object.entries(schema).map(([_, columnDefinition]) => {
+        columns: Object.values(sheetSetup.schema).map((columnDefinition) => {
           const columnName = columnDefinition.columnName;
           return {
             title: columnName,
@@ -60,94 +67,160 @@ async function _loadSheet<Schema extends SmartsheetSchema>(
       sheetId = foundSheet.id;
     }
 
-    const sheet = await SmartsheetAPI.sheets.getSheet({ sheetId: sheetId });
-    const columnsMatchedWithSchema: Record<number, string> = {}; // Key: column id, value: column title.
-    for (const column of sheet.columns) {
-      const columnKey = Object.keys(schema).find((key) => schema[key].columnName === column.title);
-      if (!columnKey) {
+    return _loadSheetBySheetId({
+      sheetId: sheetId,
+      ...sheetSetup,
+    }, options);
+  });
+}
+
+type LoadSheetByPermalinkOptions<Schema extends SmartsheetSchema> = {
+  permalink: string;
+} & LoadSheetCommonOptions<Schema>;
+
+// TODO: Validate the schema strictly for loading by permalink.
+
+/**
+ * Load a sheet from Smartsheet.
+ * @param sheetSetup
+ * @param options
+ * @private
+ */
+async function _loadSheetByPermalink<Schema extends SmartsheetSchema>(
+  sheetSetup: LoadSheetByPermalinkOptions<Schema>,
+  options: SmartsheetSDKMetaOptions,
+): Promise<PreparedSheet<Schema>> {
+  const SmartsheetAPI = prepareSmartsheetAPI(options);
+  return await errorHandler(async () => {
+    const {
+      permalink,
+    } = sheetSetup;
+    _checkSchemaValidity(sheetSetup.schema);
+    const sheets = await SmartsheetAPI.sheets.listSheets({
+      includeAll: true,
+    });
+    const foundSheet = sheets.find((sheet) => {
+      return sheet.permalink === permalink;
+    });
+    if (!foundSheet) {
+      throw new Error(`Sheet with permalink "${permalink}" not found (or do not have access to).`);
+    }
+    const sheetId = foundSheet.id;
+
+    return _loadSheetBySheetId({
+      sheetId: sheetId,
+      ...sheetSetup,
+    }, options);
+  });
+}
+
+/**
+ * Load a sheet from Smartsheet.
+ * @param sheetSetup
+ * @param options
+ * @private
+ */
+async function _loadSheetBySheetId<Schema extends SmartsheetSchema>(
+  sheetSetup: LoadSheetCommonOptions<Schema> & { sheetId: number },
+  options: SmartsheetSDKMetaOptions,
+): Promise<PreparedSheet<Schema>> {
+  const SmartsheetAPI = prepareSmartsheetAPI(options);
+  const {
+    sheetId,
+    schema,
+    strict,
+  } = sheetSetup;
+  _checkSchemaValidity(schema);
+  const sheet = await SmartsheetAPI.sheets.getSheet({ sheetId: sheetId });
+  const columnsMatchedWithSchema: Record<number, string> = {}; // Key: column id, value: column title.
+  for (const column of sheet.columns) {
+    const columnKey = Object.keys(schema).find((key) => schema[key].columnName === column.title);
+    if (!columnKey) {
+      if (!strict) {
         continue;
       }
-      const columnDefinition = schema[columnKey];
-      // Check if the type matches.
-      if (column.type !== columnDefinition.columnType) {
-        throw new Error(`Column "${column.title}" type mismatch. Expected "${columnDefinition.columnType}", but got "${column.type}".`);
-      }
-      if ('options' in columnDefinition && (!column.options || !compareItems(columnDefinition.options?._def.values, column.options))) {
-        throw new Error(`Column "${column.title}" options mismatch. Expected "${columnDefinition.options?._def.values}", but got "${column.options}".`);
-      }
-      columnsMatchedWithSchema[column.id] = columnKey;
+      throw new Error(`Column named "${column.title}" not found in the schema.`);
     }
+    const columnDefinition = schema[columnKey];
+    // Check if the type matches.
+    if (column.type !== columnDefinition.columnType) {
+      throw new Error(`Column "${column.title}" type mismatch. Expected "${columnDefinition.columnType}", but got "${column.type}".`);
+    }
+    if ('options' in columnDefinition && (!column.options || !compareItems(columnDefinition.options?._def.values, column.options))) {
+      throw new Error(`Column "${column.title}" options mismatch. Expected "${columnDefinition.options?._def.values}", but got "${column.options}".`);
+    }
+    columnsMatchedWithSchema[column.id] = columnKey;
+  }
 
-    const combinedSchema = getCombinedZodSchema(schema);
-    const preparedRowSchema = z.object(combinedSchema).merge(z.object({
-      id: z.number(),
-    })) as z.ZodType<ProcessingRow<Schema>>;
+  const combinedSchema = getCombinedZodSchema(schema);
+  const preparedRowSchema = z.object(combinedSchema).merge(z.object({
+    id: z.number(),
+  })) as z.ZodType<ProcessingRow<Schema>>;
 
-    function updateRow(row: PreparedRow<Schema>) {
-      return SmartsheetAPI.rows.updateRow({
+  function updateRow(row: PreparedRow<Schema>) {
+    return SmartsheetAPI.rows.updateRow({
+      sheetId: sheetId,
+      rowId: row.id,
+      data: {
+        cells: mapObjectToColumns(sheet, schema, row, row.formats),
+      },
+    });
+  }
+
+  // TODO: Assign the updated object back to the row object (e.g. refresh).
+  return {
+    getSheet: async () => sheet,
+    getColumns: async () => sheet.columns,
+    getRows: async () => {
+      return sheet.rows.map((row) => {
+        const obj: Record<string, unknown> = {};
+        for (const cell of row.cells) {
+          const columnName = columnsMatchedWithSchema[cell.columnId];
+          if (!columnName) {
+            continue;
+          }
+          obj[columnName] = cell.value;
+        }
+        obj.id = row.id;
+        return {
+          ...preparedRowSchema.parse(obj),
+          formats: mapColumnsToFormats(row, schema, columnsMatchedWithSchema),
+          update: async function() {
+            await updateRow(this);
+          },
+        } satisfies PreparedRow<Schema>;
+      });
+    },
+    insertRow: async (row: NewRow<Schema>) => {
+      const createdRow = await SmartsheetAPI.rows.insertRow({
         sheetId: sheetId,
-        rowId: row.id,
-        data: {
-          cells: mapObjectToColumns(sheet, schema, row, row.formats),
+        row: {
+          cells: mapObjectToColumns(sheet, schema, row),
         },
       });
-    }
-
-    // TODO: Assign the updated object back to the row object (e.g. refresh).
-    return {
-      getSheet: async () => sheet,
-      getColumns: async () => sheet.columns,
-      getRows: async () => {
-        return sheet.rows.map((row) => {
-          const obj: Record<string, unknown> = {};
-          for (const cell of row.cells) {
-            const columnName = columnsMatchedWithSchema[cell.columnId];
-            if (!columnName) {
-              continue;
-            }
-            obj[columnName] = cell.value;
-          }
-          obj.id = row.id;
-          return {
-            ...preparedRowSchema.parse(obj),
-            formats: mapColumnsToFormats(row, schema, columnsMatchedWithSchema),
-            update: async function() {
-              await updateRow(this);
-            },
-          } satisfies PreparedRow<Schema>;
-        });
-      },
-      insertRow: async (row: NewRow<Schema>) => {
-        const createdRow = await SmartsheetAPI.rows.insertRow({
-          sheetId: sheetId,
-          row: {
-            cells: mapObjectToColumns(sheet, schema, row),
-          },
-        });
-        return {
-          ...mapColumnsToObject(createdRow, schema, preparedRowSchema, columnsMatchedWithSchema),
-          update: async function() {
-            await updateRow(this);
-          },
-        } satisfies PreparedRow<Schema>;
-      },
-      getRow: async (rowId: number) => {
-        const row = await SmartsheetAPI.rows.getRow({
-          sheetId: sheetId,
-          rowId: rowId,
-        });
-        if (!row) {
-          throw new Error(`Row "${rowId}" not found.`);
-        }
-        return {
-          ...mapColumnsToObject(row, schema, preparedRowSchema, columnsMatchedWithSchema),
-          update: async function() {
-            await updateRow(this);
-          },
-        } satisfies PreparedRow<Schema>;
-      },
-    } satisfies PreparedSheet<Schema>;
-  });
+      return {
+        ...mapColumnsToObject(createdRow, schema, preparedRowSchema, columnsMatchedWithSchema),
+        update: async function() {
+          await updateRow(this);
+        },
+      } satisfies PreparedRow<Schema>;
+    },
+    getRow: async (rowId: number) => {
+      const row = await SmartsheetAPI.rows.getRow({
+        sheetId: sheetId,
+        rowId: rowId,
+      });
+      if (!row) {
+        throw new Error(`Row "${rowId}" not found.`);
+      }
+      return {
+        ...mapColumnsToObject(row, schema, preparedRowSchema, columnsMatchedWithSchema),
+        update: async function() {
+          await updateRow(this);
+        },
+      } satisfies PreparedRow<Schema>;
+    },
+  } satisfies PreparedSheet<Schema>;
 }
 
 type SmartsheetSDKMetaOptions = {
@@ -162,6 +235,7 @@ export function prepareSmartsheetSDK(options: SmartsheetSDKMetaOptions) {
   if (!options.accessToken) {
     throw new Error('Missing Smartsheet API Token.');
   }
+  const apiClient = prepareSmartsheetAPI(options);
   return {
     /**
      * Load a sheet from Smartsheet.
@@ -172,6 +246,11 @@ export function prepareSmartsheetSDK(options: SmartsheetSDKMetaOptions) {
     loadSheet: <Schema extends SmartsheetSchema>(sheetSetup: LoadSheetOptions<Schema>) => {
       return _loadSheet(sheetSetup, options);
     },
+    loadSheetByPermalink: <Schema extends SmartsheetSchema>(sheetSetup: LoadSheetByPermalinkOptions<Schema>) => {
+      return _loadSheetByPermalink(sheetSetup, options);
+    },
+    api: apiClient,
+    listSheets: apiClient.sheets.listSheets,
   };
 }
 

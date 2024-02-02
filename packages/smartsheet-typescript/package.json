@@ -1,6 +1,6 @@
 {
   "name": "smartsheet-typescript",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "files": [
     "dist",
     "README.md"
@@ -9,7 +9,8 @@
     ".": "./dist/index.js"
   },
   "repository": "https://github.com/ECA-Greentech/smartsheet-typescript",
-  "homepage": "https://smartsheet-typescript.vercel.app/",
+  "homepage": "https://smartsheet-typescript.vercel.app",
+  "license": "MIT",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
