@@ -42,7 +42,9 @@ async function _loadSheet<Schema extends SmartsheetSchema>(
       name,
     } = sheetSetup;
     _checkSchemaValidity(sheetSetup.schema);
-    const sheets = await SmartsheetAPI.sheets.listSheets();
+    const sheets = await SmartsheetAPI.sheets.listSheets({
+      includeAll: true,
+    });
     const foundSheet = sheets.find((sheet) => sheet.name === name);
     if (!foundSheet && !sheetSetup.createIfNotExist) {
       throw new Error(`Sheet "${name}" not found.`);
