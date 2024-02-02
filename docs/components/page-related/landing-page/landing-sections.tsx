@@ -5,7 +5,7 @@ import { IconTerminal } from '@tabler/icons-react';
 export function LandingHeroSection() {
   return (
     <section className={'w-full min-h-[calc(100vh-var(--nextra-navbar-height))] flex flex-col items-center justify-center relative'}>
-      <div className={'w-full flex flex-col items-center pb-8 gap-y-4 md:gap-y-6'}>
+      <div className={'w-full flex flex-col items-center pb-6 gap-y-4 md:gap-y-6'}>
         <h1 className={'w-full text-center text-3xl lg:text-6xl font-semibold text-mauve-12'}>
           <Balancer>
             Refine Production Safety for Smartsheet Integrations
