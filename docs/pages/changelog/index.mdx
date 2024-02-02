@@ -1,0 +1,34 @@
+import { Callout } from 'nextra/components';
+
+# Release Notes
+
+<Callout type="warning">
+  This SDK will be in early access (unstable) until bumping to v1.0.0 when it's ready for general availability and production use.
+  During early access, it is possible to have breaking major changes without bumping the major version number in SemVer,
+  but we will post an upgrade guide in the release notes for every breaking change.
+</Callout>
+
+
+
+## 0.1.1
+
+* Fixed a bug where `loadSheet` might not check through all available sheets due to default pagination.
+
+## 0.1.0
+
+* Added `strict` option to `loadSheet` for strictly enforcing the schema of the sheet (disabling backwards compatibility).
+* Added `loadSheetByPermalink` for loading a sheet by its permalink. This mode does not create sheet when it does not exist.
+* Added the access of `listSheets` and `api` directly from prepared SDK object for better developer experience.
+* Fixed some minor bugs introduced in previous early access versions.
+
+## 0.0.3
+
+* Added system column type support.
+
+## 0.0.2
+
+* Added full format support including color, font size, number format, currency, thousands separator, and more.
+
+## 0.0.1
+
+* Initial launch of the SDK for early access.
