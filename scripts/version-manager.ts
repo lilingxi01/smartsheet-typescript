@@ -47,7 +47,7 @@ function bumpVersion(currentVersion: string, type: VersionType): string {
 
 function main() {
   const args = Bun.argv.slice(2); // Skip the first two default arguments
-  const versionType: VersionType = args[0] as VersionType;
+  const versionType: VersionType = (args[0] ? args[0] : 'dev') as VersionType;
 
   if (!versionType || !['major', 'minor', 'patch', 'dev'].includes(versionType)) {
     console.error('Usage: bun version <major|minor|patch|dev>');
