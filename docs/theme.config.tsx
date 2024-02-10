@@ -20,9 +20,9 @@ export default {
     },
     defaultMenuCollapseLevel: 1,
   },
-  docsRepositoryBase: 'https://github.com/ECA-Greentech/smartsheet-typescript/tree/main/docs',
+  docsRepositoryBase: 'https://github.com/lilingxi01/smartsheet-typescript/tree/main/docs',
   project: {
-    link: 'https://github.com/ECA-Greentech/smartsheet-typescript',
+    link: 'https://github.com/lilingxi01/smartsheet-typescript',
   },
   useNextSeoProps() {
     return {
