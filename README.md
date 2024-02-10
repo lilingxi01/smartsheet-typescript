@@ -3,7 +3,7 @@
 # Smartsheet TypeScript SDK (Monorepo)
 
 > [!NOTE]  
-> This repository is the continuation of [the original codebase]((https://github.com/ECA-Greentech/smartsheet-typescript)) for possible future updates and PRs. Due to an unforeseen circumstance, the maintenance and the development of this package has been discontinued at the original codebase by ECA Solar LLC. This repository is a deep fork of the original codebase and maintains the original license and the authorship.
+> This repository is the continuation of [the original codebase](https://github.com/ECA-Greentech/smartsheet-typescript) for possible future updates and PRs. Due to an unforeseen circumstance, the maintenance and the development of this package has been discontinued at the original codebase by ECA Solar LLC. This repository is a deep fork of the original codebase and maintains the original license and the authorship.
 
 ## Package Documentation
 
